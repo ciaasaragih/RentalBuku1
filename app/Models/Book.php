@@ -10,7 +10,14 @@ class Book extends Model
     use HasFactory;
 
     // Tambahkan 'image' di sini
-    protected $fillable = ['title', 'image'];
+    protected $fillable = [
+        'title',
+        'author',
+        'image',
+        'cover_image',
+        'stock',
+    ];
+
 
     // Relasi ke kategori (Many to Many)
     public function categories()

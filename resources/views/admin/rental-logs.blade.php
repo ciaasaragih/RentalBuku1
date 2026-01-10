@@ -2,25 +2,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         .page-wrapper {
             background: linear-gradient(135deg, #fef3f3 0%, #fef7f3 25%, #fef9f3 50%, #f3fef6 75%, #f3f9fe 100%);
             min-height: 100vh;
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.75) !important;
             backdrop-filter: blur(20px);
             border: 1.5px solid rgba(255, 255, 255, 0.8) !important;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08) !important;
         }
+
         .btn-extend {
             background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
             transition: all 0.2s ease;
         }
-        .btn-extend:hover { transform: scale(1.05); }
-        .badge-returned { background: #d1fae5 !important; color: #065f46 !important; }
-        .badge-borrowed { background: #fef3c7 !important; color: #92400e !important; }
-        .badge-danger { background: #fee2e2 !important; color: #991b1b !important; }
+
+        .btn-extend:hover {
+            transform: scale(1.05);
+        }
+
+        .badge-returned {
+            background: #d1fae5 !important;
+            color: #065f46 !important;
+        }
+
+        .badge-borrowed {
+            background: #fef3c7 !important;
+            color: #92400e !important;
+        }
+
+        .badge-danger {
+            background: #fee2e2 !important;
+            color: #991b1b !important;
+        }
     </style>
 
     <x-slot name="header">
@@ -34,17 +54,17 @@
 
     <div class="py-12 page-wrapper">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
+
             @if(session('success'))
-                <div class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 glass-card rounded-lg">
-                    {{ session('success') }}
-                </div>
+            <div class="mb-4 p-4 bg-green-100 border-l-4 border-green-500 text-green-700 glass-card rounded-lg">
+                {{ session('success') }}
+            </div>
             @endif
 
             <div class="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 glass-card">
                 <p class="text-sm">
-                    <strong>Informasi Setting:</strong> Setiap perpanjangan menambah masa pinjam 
-                    <b>{{ $penaltyDetail->masa_tenggang ?? 0 }} hari</b>. 
+                    <strong>Informasi Setting:</strong> Setiap perpanjangan menambah masa pinjam
+                    <b>{{ $penaltyDetail->masa_tenggang ?? 0 }} hari</b>.
                     Tarif denda: <b>Rp {{ number_format($penaltyDetail->nominal_denda ?? 0, 0, ',', '.') }}</b>/hari.
                 </p>
             </div>
@@ -55,7 +75,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">No</th>
-                                <th class="px-6 py-3 text-left text-xs font-bold uppercase">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold uppercase">Nama Peminjam</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Buku</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Tgl Kembali</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Status</th>
@@ -66,22 +86,23 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @foreach($logs as $log)
                             @php
-                                // Hitung selisih hari jika terlambat
-                                $today = \Carbon\Carbon::today();
-                                $returnDate = \Carbon\Carbon::parse($log->return_date);
-                                $isLate = !$log->actual_return_date && $today->gt($returnDate);
-                                $lateDays = $isLate ? $today->diffInDays($returnDate) : 0;
-                                $estimatedFine = $lateDays * ($penaltyDetail->nominal_denda ?? 0);
+                            // Hitung selisih hari jika terlambat
+                            $today = \Carbon\Carbon::today();
+                            $returnDate = \Carbon\Carbon::parse($log->return_date);
+                            $isLate = !$log->actual_return_date && $today->gt($returnDate);
+                            $lateDays = $isLate ? $today->diffInDays($returnDate) : 0;
+                            $estimatedFine = $lateDays * ($penaltyDetail->nominal_denda ?? 0);
                             @endphp
                             <tr>
                                 <td class="px-6 py-4 text-sm">{{ $loop->iteration }}</td>
-                                <td class="px-6 py-4 text-sm font-medium">{{ $log->user->username ?? 'N/A' }}</td>
-                                <td class="px-6 py-4 text-sm">{{ $log->bookItem?->book?->title ?? 'N/A' }}</td>
-                                
+                                <td class="px-6 py-4 text-sm font-medium">{{ $log->user->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-sm">{{ $log->book?->title ?? 'N/A' }}
+                                </td>
+
                                 <td class="px-6 py-4 text-sm {{ $isLate ? 'text-red-600 font-bold' : '' }}">
                                     {{ $returnDate->format('d M Y') }}
                                     @if($isLate)
-                                        <br><span class="text-[10px] uppercase">(Terlambat {{ $lateDays }} Hari)</span>
+                                    <br><span class="text-[10px] uppercase">(Terlambat {{ $lateDays }} Hari)</span>
                                     @endif
                                 </td>
 
@@ -97,14 +118,14 @@
 
                                 <td class="px-6 py-4 text-center">
                                     @if(!$log->actual_return_date)
-                                        <form action="{{ route('admin.rental-logs.extend', $log->id) }}" method="POST" onsubmit="return confirm('Perpanjang peminjaman buku ini selama {{ $penaltyDetail->masa_tenggang ?? 0 }} hari?')">
-                                            @csrf
-                                            <button type="submit" class="btn-extend text-white text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase">
-                                                + Perpanjang
-                                            </button>
-                                        </form>
+                                    <form action="{{ route('admin.rental-logs.extend', $log->id) }}" method="POST" onsubmit="return confirm('Perpanjang peminjaman buku ini selama {{ $penaltyDetail->masa_tenggang ?? 0 }} hari?')">
+                                        @csrf
+                                        <button type="submit" class="btn-extend text-white text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase">
+                                            + Perpanjang
+                                        </button>
+                                    </form>
                                     @else
-                                        <span class="text-gray-300">- Selesai -</span>
+                                    <span class="text-gray-300">- Selesai -</span>
                                     @endif
                                 </td>
                             </tr>
