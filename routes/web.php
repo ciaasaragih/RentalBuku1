@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\BookController;
 use App\Http\Controllers\Admin\PenaltyController;
 use App\Http\Controllers\KatalogController;
+use App\Http\Controllers\PinjamanPenyewaController;
 use Illuminate\Support\Facades\Route;
 
 // 1. SETELAN AWAL
@@ -55,9 +56,11 @@ Route::middleware('auth')->group(function () {
                 ->name('fines');
 
             // 4. Perpanjangan Peminjaman
-
             Route::post('/rental-logs/{id}/extend', [AdminController::class, 'extend'])
                 ->name('rental-logs.extend');
+            Route::post('admin/rental-logs/{log}/return', [AdminController::class, 'returnBook'])
+                ->name('rental-logs.return');
+
 
             // 5. Rute Pengaturan Denda
             Route::get('/penalty-settings', [PenaltyController::class, 'edit'])
@@ -73,6 +76,9 @@ Route::middleware('auth')->group(function () {
     //pinjam
     Route::post('/peminjaman/{book}', [KatalogController::class, 'borrow'])
         ->name('peminjaman.store');
+    // peminjaman saya
+    Route::get('/peminjaman-saya', [PinjamanPenyewaController::class, 'index'])
+        ->name('pinjaman.saya');
 });
 
 require __DIR__ . '/auth.php';

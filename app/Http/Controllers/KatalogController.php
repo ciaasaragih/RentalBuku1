@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\Peminjaman;
 use App\Models\RentLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class KatalogController extends Controller
@@ -62,21 +64,30 @@ class KatalogController extends Controller
 
     public function borrow(Request $request, Book $book)
     {
-        // Cek stok
+        // 1. Cek stok
         if ($book->stock < 1) {
             return back()->with('error', 'Stok buku habis.');
         }
 
-        // Simpan log peminjaman
-        RentLog::create([
-            'user_id' => auth()->id(),
+        // 2. Simpan log peminjaman (RentLog)
+        $rentLog = RentLog::create([
+            'user_id' => Auth::id(),
             'book_id' => $book->id,
             'rent_date' => now(),
             'return_date' => Carbon::now()->addDays(7),
         ]);
 
-        // Kurangi stok
+        // 3. Kurangi stok buku
         $book->decrement('stock');
+
+        // 4. Tambahkan record ke tabel peminjamans
+        Peminjaman::create([
+            'user_id' => Auth::id(),
+            'book_id' => $book->id,
+            'tanggal_pinjam' => now(),
+            'tanggal_kembali_seharusnya' => Carbon::now()->addDays(7),
+            'status' => 'dipinjam',
+        ]);
 
         return back()->with('success', 'Peminjaman berhasil diajukan.');
     }

@@ -104,7 +104,7 @@
                             <span class="ml-3 font-medium text-sm">Buku Tersedia</span>
                         </a>
 
-                        <a href="#"
+                        <a href="{{ route('pinjaman.saya') }}"
                             class="flex items-center p-3 text-gray-700 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all group">
                             <span class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 text-orange-600">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

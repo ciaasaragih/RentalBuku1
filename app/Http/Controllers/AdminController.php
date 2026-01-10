@@ -9,6 +9,7 @@ use App\Models\PenaltySetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -103,5 +104,27 @@ class AdminController extends Controller
         // return view('admin.fines', compact('fines'));
 
         return abort(404, 'View fines belum tersedia');
+    }
+
+    public function returnBook($id)
+    {
+        $log = RentLog::findOrFail($id);
+
+        if ($log->actual_return_date) {
+            return back()->with('error', 'Buku sudah dikembalikan.');
+        }
+
+        DB::transaction(function () use ($log) {
+            // 1. Update actual_return_date & status
+            $log->update([
+                'actual_return_date' => now(),
+                'status' => 'dikembalikan', // jika ada kolom status
+            ]);
+
+            // 2. Tambah stok buku
+            $log->book->increment('stock');
+        });
+
+        return back()->with('success', 'Buku berhasil dikembalikan.');
     }
 }

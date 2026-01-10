@@ -77,6 +77,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">No</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Nama Peminjam</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Buku</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold uppercase">Estimasi Tgl Kembali</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Tgl Kembali</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-bold uppercase">Estimasi Denda</th>
@@ -107,6 +108,16 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-sm">
+                                    <span class="px-3 py-1 text-xs font-bold rounded-full">
+                                        @if($log->actual_return_date)
+                                        {{ \Carbon\Carbon::parse($log->actual_return_date)->format('d M Y') }}
+                                        @else
+                                        -
+                                        @endif
+                                    </span>
+                                </td>
+
+                                <td class="px-6 py-4 text-sm">
                                     <span class="px-3 py-1 text-xs font-bold rounded-full {{ $log->actual_return_date ? 'badge-returned' : 'badge-borrowed' }}">
                                         {{ $log->actual_return_date ? 'Sudah Kembali' : 'Masih Dipinjam' }}
                                     </span>
@@ -116,12 +127,20 @@
                                     Rp {{ number_format($estimatedFine, 0, ',', '.') }}
                                 </td>
 
-                                <td class="px-6 py-4 text-center">
+                                <td class="px-6 py-4 text-center gap-4">
                                     @if(!$log->actual_return_date)
                                     <form action="{{ route('admin.rental-logs.extend', $log->id) }}" method="POST" onsubmit="return confirm('Perpanjang peminjaman buku ini selama {{ $penaltyDetail->masa_tenggang ?? 0 }} hari?')">
                                         @csrf
                                         <button type="submit" class="btn-extend text-white text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase">
                                             + Perpanjang
+                                        </button>
+                                    </form>
+
+                                    {{-- Tombol Dikembalikan --}}
+                                    <form action="{{ route('admin.rental-logs.return', $log->id) }}" method="POST" onsubmit="return confirm('Konfirmasi pengembalian buku ini?')">
+                                        @csrf
+                                        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase">
+                                            Dikembalikan
                                         </button>
                                     </form>
                                     @else
