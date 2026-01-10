@@ -20,12 +20,12 @@
         <div>
             <x-input-label for="photo" value="Photo Profile" />
 
-            <div class="flex items-center gap-4 mt-2">
+            <div class="flex items-center gap-4 mt-2 relative">
 
                 {{-- PREVIEW FOTO (KLIKABLE) --}}
                 <label for="photo"
                     class="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border cursor-pointer
-               flex items-center justify-center group">
+        flex items-center justify-center group relative">
 
                     @if ($user->photo)
                     <img id="photoPreview"
@@ -39,8 +39,8 @@
                     @endif
 
                     {{-- Overlay hover --}}
-                    <div class="absolute opacity-0 group-hover:opacity-100 transition
-                    bg-black/40 text-white text-xs px-2 py-1 rounded">
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition
+        bg-black/40 text-white text-xs font-semibold">
                         Change
                     </div>
                 </label>
@@ -52,7 +52,6 @@
                     accept="image/*"
                     class="hidden"
                     onchange="previewPhoto(event)">
-
             </div>
 
 
@@ -104,3 +103,27 @@
         </div>
     </form>
 </section>
+
+{{-- SCRIPT PREVIEW --}}
+<script>
+    function previewPhoto(event) {
+        const input = event.target;
+        const preview = document.getElementById('photoPreview');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Jika sebelumnya div 'No Photo', ganti isinya dengan <img>
+                if (preview.tagName.toLowerCase() === 'div') {
+                    const img = document.createElement('img');
+                    img.id = 'photoPreview';
+                    img.className = 'w-full h-full object-cover';
+                    preview.replaceWith(img);
+                    preview = img;
+                }
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
