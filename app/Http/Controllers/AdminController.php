@@ -4,17 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Book;
-use App\Models\Category;
 use App\Models\RentLog;
 use App\Models\PenaltySetting;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
     /**
-     * Menampilkan daftar user yang menunggu persetujuan
+     * Dashboard Admin
+     */
+    public function dashboard()
+    {
+        // Ringkasan
+        $totalBuku = Book::count();
+
+        $dipinjam = RentLog::whereNull('actual_return_date')
+            ->count();
+
+        $memberAktif = User::where('role', 'penyewa')
+            ->where('is_approved', true)
+            ->count();
+
+        // Buku terbaru
+        $books = Book::latest()->take(8)->get();
+
+        return view('admin.dashboard', compact(
+            'books',
+            'totalBuku',
+            'dipinjam',
+            'memberAktif'
+        ));
+    }
+
+    /**
+     * Daftar user menunggu persetujuan
      */
     public function userList()
     {
@@ -22,56 +48,27 @@ class AdminController extends Controller
             ->where('is_approved', false)
             ->get();
 
-        return view('admin.books.users-approval', compact('users'));
+        return view('admin.users-approval', compact('users'));
     }
 
     /**
-     * Menyetujui user
+     * Setujui user
      */
     public function approveUser($id): RedirectResponse
     {
-        $user = User::findOrFail($id);
-        $user->update(['is_approved' => true]);
+        User::findOrFail($id)->update([
+            'is_approved' => true
+        ]);
 
         return back()->with('success', 'User berhasil disetujui.');
     }
 
     /**
-     * Menampilkan form tambah buku
-     */
-    public function create()
-    {
-        $categories = Category::all();
-        return view('admin.books.create', compact('categories'));
-    }
-
-    /**
-     * Simpan buku baru
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'categories' => 'required|array',
-        ]);
-
-        $book = Book::create([
-            'title' => $request->title,
-        ]);
-
-        $book->categories()->sync($request->categories);
-
-        return redirect()
-            ->route('admin.books.create')
-            ->with('success', 'Buku berhasil ditambahkan!');
-    }
-
-    /**
-     * Menampilkan log peminjaman
+     * Log peminjaman
      */
     public function rentalLog()
     {
-        $logs = RentLog::with(['user', 'bookItem.book'])
+        $logs = RentLog::with(['user', 'book'])
             ->latest()
             ->get();
 
@@ -81,15 +78,15 @@ class AdminController extends Controller
     }
 
     /**
-     * Perpanjang peminjaman buku
+     * Perpanjang peminjaman
      */
     public function extend($id)
     {
         $log = RentLog::findOrFail($id);
 
-        // Perpanjang 7 hari
-        $log->return_date = Carbon::parse($log->return_date)->addDays(7);
-        $log->save();
+        $log->update([
+            'return_date' => Carbon::parse($log->return_date)->addDays(7)
+        ]);
 
         return back()->with('success', 'Peminjaman berhasil diperpanjang.');
     }
@@ -99,11 +96,35 @@ class AdminController extends Controller
      */
     public function fineList()
     {
-        $fines = RentLog::with(['user', 'bookItem.book'])
-            ->whereNull('actual_return_date')
-            ->where('return_date', '<', now())
-            ->get();
+        // $fines = RentLog::with(['user', 'bookItem.book'])
+        //     ->whereNull('actual_return_date')
+        //     ->where('return_date', '<', now())
+        //     ->get();
 
-        return view('admin.fines', compact('fines'));
+        // return view('admin.fines', compact('fines'));
+
+        return abort(404, 'View fines belum tersedia');
+    }
+
+    public function returnBook($id)
+    {
+        $log = RentLog::findOrFail($id);
+
+        if ($log->actual_return_date) {
+            return back()->with('error', 'Buku sudah dikembalikan.');
+        }
+
+        DB::transaction(function () use ($log) {
+            // 1. Update actual_return_date & status
+            $log->update([
+                'actual_return_date' => now(),
+                'status' => 'dikembalikan', // jika ada kolom status
+            ]);
+
+            // 2. Tambah stok buku
+            $log->book->increment('stock');
+        });
+
+        return back()->with('success', 'Buku berhasil dikembalikan.');
     }
 }

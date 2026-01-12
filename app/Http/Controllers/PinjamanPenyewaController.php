@@ -21,6 +21,6 @@ class PinjamanPenyewaController extends Controller
             ->get();
 
         // 3. Kirim data ke file view (nanti kita buat file view-nya)
-        return view('penyewa.pinjaman.index', compact('pinjamanSaya'));
+        return view('katalog.pinjaman-saya', compact('pinjamanSaya'));
     }
 }
